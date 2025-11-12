@@ -46,6 +46,10 @@ export const useScrollProgress = (
     isAtBottom: false,
   });
 
+  // Mobile optimization: Throttle scroll events more aggressively on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const throttleDelay = isMobile ? 32 : 16; // ~30fps on mobile, ~60fps on desktop
+
   // Calculate scroll progress and velocity
   useEffect(() => {
     const element = ref.current || document.documentElement;
@@ -86,7 +90,7 @@ export const useScrollProgress = (
         scrollTimeout.current = setTimeout(() => {
           updateScrollState();
           scrollTimeout.current = undefined;
-        }, 16); // ~60fps
+        }, throttleDelay);
       }
     };
 
@@ -97,8 +101,11 @@ export const useScrollProgress = (
     // Use requestAnimationFrame for smooth updates
     animationFrameId = requestAnimationFrame(updateScrollState);
 
-    element.addEventListener('scroll', handleScroll);
-    window.addEventListener('scrollend', handleScrollEnd);
+    // Mobile optimization: Use passive scroll listeners
+    const scrollOptions = isMobile ? { passive: true } : {};
+    
+    element.addEventListener('scroll', handleScroll, scrollOptions);
+    window.addEventListener('scrollend', handleScrollEnd, scrollOptions);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -108,7 +115,7 @@ export const useScrollProgress = (
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, []);
+  }, [isMobile, throttleDelay]);
 
   // Intersection Observer for section tracking
   useEffect(() => {
@@ -116,8 +123,8 @@ export const useScrollProgress = (
 
     const options = {
       root: ref.current || null,
-      rootMargin: '-10% 0px -10% 0px',
-      threshold: buildThresholdList(100),
+      rootMargin: isMobile ? '-5% 0px -5% 0px' : '-10% 0px -10% 0px', // Smaller margin on mobile
+      threshold: buildThresholdList(isMobile ? 50 : 100), // Fewer steps on mobile
     };
 
     observerRef.current = new IntersectionObserver((entries) => {
@@ -151,7 +158,7 @@ export const useScrollProgress = (
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [sections]);
+  }, [sections, isMobile]);
 
   // Build threshold array for Intersection Observer
   const buildThresholdList = (numSteps: number): number[] => {
@@ -172,25 +179,30 @@ export const useScrollProgress = (
     const absoluteElementTop = elementRect.top + window.pageYOffset;
     const scrollPosition = absoluteElementTop - offset;
 
+    // Mobile optimization: Use instant scroll for better UX
+    const behavior = isMobile ? 'auto' : 'smooth';
+    
     window.scrollTo({
       top: scrollPosition,
-      behavior: 'smooth',
+      behavior,
     });
   };
 
   // Scroll to top
   const scrollToTop = (): void => {
+    const behavior = isMobile ? 'auto' : 'smooth';
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior,
     });
   };
 
   // Scroll to bottom
   const scrollToBottom = (): void => {
+    const behavior = isMobile ? 'auto' : 'smooth';
     window.scrollTo({
       top: document.documentElement.scrollHeight,
-      behavior: 'smooth',
+      behavior,
     });
   };
 
@@ -284,6 +296,9 @@ export const useScrollTrigger = (
   const ref = useRef<HTMLElement>(null);
   const { once = true, threshold = 0.1 } = options;
 
+  // Mobile optimization
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -303,14 +318,14 @@ export const useScrollTrigger = (
       },
       {
         threshold: buildThresholdSteps(threshold),
-        rootMargin: '0px 0px -10% 0px',
+        rootMargin: isMobile ? '0px 0px -5% 0px' : '0px 0px -10% 0px',
       }
     );
 
     observer.observe(element);
 
     return () => observer.unobserve(element);
-  }, [triggerPoint, once, threshold, isTriggered]);
+  }, [triggerPoint, once, threshold, isTriggered, isMobile]);
 
   const buildThresholdSteps = (step: number): number[] => {
     const steps: number[] = [];
@@ -344,6 +359,11 @@ export const scrollPresets = {
     smooth: false,
     threshold: 0.5,
     rootMargin: '0px 0px -30% 0px',
+  },
+  mobile: {
+    smooth: false,
+    threshold: 0.2,
+    rootMargin: '0px 0px -5% 0px',
   },
 };
 

@@ -1,5 +1,11 @@
 // 🎨 SUPER ATTRACTIVE COLOR SYSTEM
 
+// Mobile performance check
+export const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 768;
+};
+
 // 🌈 NEON GRADIENTS
 export const neonGradients = {
   royalGold: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
@@ -10,13 +16,27 @@ export const neonGradients = {
   rainbow: 'linear-gradient(135deg, #FF1493 0%, #FFD700 25%, #00FFFF 50%, #8A2BE2 75%, #FF1493 100%)',
 };
 
-// ✨ GLOW EFFECTS
+// ✨ GLOW EFFECTS - Optimized for mobile
 export const glowEffects = {
-  gold: '0 0 20px rgba(255, 215, 0, 0.7), 0 0 40px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.3)',
-  pink: '0 0 20px rgba(255, 20, 147, 0.7), 0 0 40px rgba(255, 20, 147, 0.5), 0 0 60px rgba(255, 20, 147, 0.3)',
-  blue: '0 0 20px rgba(0, 255, 255, 0.7), 0 0 40px rgba(0, 255, 255, 0.5), 0 0 60px rgba(0, 255, 255, 0.3)',
-  purple: '0 0 20px rgba(138, 43, 226, 0.7), 0 0 40px rgba(138, 43, 226, 0.5), 0 0 60px rgba(138, 43, 226, 0.3)',
-  multi: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 20, 147, 0.5), 0 0 60px rgba(0, 255, 255, 0.5)',
+  gold: isMobile() 
+    ? '0 0 10px rgba(255, 215, 0, 0.7)' 
+    : '0 0 20px rgba(255, 215, 0, 0.7), 0 0 40px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.3)',
+  
+  pink: isMobile()
+    ? '0 0 10px rgba(255, 20, 147, 0.7)'
+    : '0 0 20px rgba(255, 20, 147, 0.7), 0 0 40px rgba(255, 20, 147, 0.5), 0 0 60px rgba(255, 20, 147, 0.3)',
+  
+  blue: isMobile()
+    ? '0 0 10px rgba(0, 255, 255, 0.7)'
+    : '0 0 20px rgba(0, 255, 255, 0.7), 0 0 40px rgba(0, 255, 255, 0.5), 0 0 60px rgba(0, 255, 255, 0.3)',
+  
+  purple: isMobile()
+    ? '0 0 10px rgba(138, 43, 226, 0.7)'
+    : '0 0 20px rgba(138, 43, 226, 0.7), 0 0 40px rgba(138, 43, 226, 0.5), 0 0 60px rgba(138, 43, 226, 0.3)',
+  
+  multi: isMobile()
+    ? '0 0 15px rgba(255, 215, 0, 0.5)'
+    : '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 20, 147, 0.5), 0 0 60px rgba(0, 255, 255, 0.5)',
 };
 
 // 🎭 THEME COLORS
@@ -46,9 +66,13 @@ export const themeColors = {
   bgRainbow: 'linear-gradient(135deg, #FF1493 0%, #FFD700 25%, #00FFFF 50%, #8A2BE2 75%, #FF1493 100%)',
 };
 
-// 💫 ANIMATED GRADIENTS (CSS Keyframes ready)
+// 💫 ANIMATED GRADIENTS (CSS Keyframes ready) - Mobile optimized
 export const animatedGradients = {
-  shimmer: `
+  shimmer: isMobile() ? `
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite;
+  ` : `
     background: linear-gradient(
       90deg,
       transparent,
@@ -60,64 +84,89 @@ export const animatedGradients = {
     background-size: 200% 100%;
     animation: shimmer 3s infinite;
   `,
-  pulse: `
+  
+  pulse: isMobile() ? `
+    background: linear-gradient(135deg, #FFD700, #FF1493);
+    background-size: 200% 200%;
+    animation: gradientPulse 6s ease infinite;
+  ` : `
     background: linear-gradient(135deg, #FFD700, #FF1493, #00FFFF);
     background-size: 400% 400%;
     animation: gradientPulse 4s ease infinite;
   `,
-  flow: `
+  
+  flow: isMobile() ? `
+    background: linear-gradient(-45deg, #FF1493, #FFD700);
+    background-size: 200% 200%;
+    animation: gradientFlow 8s ease infinite;
+  ` : `
     background: linear-gradient(-45deg, #FF1493, #FFD700, #00FFFF, #8A2BE2);
     background-size: 400% 400%;
     animation: gradientFlow 6s ease infinite;
   `,
 };
 
-// 🎪 PARTICLE COLORS
+// 🎪 PARTICLE COLORS - Reduced complexity on mobile
 export const particleColors = {
-  hearts: ['#FF1493', '#FF69B4', '#FFB6C1', '#FFD700'],
-  sparkles: ['#FFFFFF', '#FFD700', '#00FFFF', '#FF1493'],
-  stars: ['#FFFFFF', '#FFD700', '#FFA500', '#FFFF00'],
-  magic: ['#FF1493', '#00FFFF', '#FFD700', '#8A2BE2'],
+  hearts: isMobile() 
+    ? ['#FF1493', '#FFD700']  // Fewer colors on mobile
+    : ['#FF1493', '#FF69B4', '#FFB6C1', '#FFD700'],
+  
+  sparkles: isMobile()
+    ? ['#FFFFFF', '#FFD700']
+    : ['#FFFFFF', '#FFD700', '#00FFFF', '#FF1493'],
+  
+  stars: isMobile()
+    ? ['#FFFFFF', '#FFD700']
+    : ['#FFFFFF', '#FFD700', '#FFA500', '#FFFF00'],
+  
+  magic: isMobile()
+    ? ['#FF1493', '#00FFFF']
+    : ['#FF1493', '#00FFFF', '#FFD700', '#8A2BE2'],
 };
 
-// 📱 COMPONENT SPECIFIC COLORS
+// 📱 COMPONENT SPECIFIC COLORS - Mobile optimized
 export const componentColors = {
-  // Hero Section
+  // Hero Section - Simplified for mobile
   hero: {
-    background: 'linear-gradient(135deg, #4A0072 0%, #FF1493 50%, #FFD700 100%)',
+    background: isMobile() 
+      ? 'linear-gradient(135deg, #4A0072 0%, #FF1493 100%)'
+      : 'linear-gradient(135deg, #4A0072 0%, #FF1493 50%, #FFD700 100%)',
     text: '#FFFFFF',
     accent: '#FFD700',
-    glow: glowEffects.multi,
+    glow: isMobile() ? glowEffects.gold : glowEffects.multi,
   },
 
-  // Cards & Sections
+  // Cards & Sections - Lighter effects on mobile
   cards: {
     background: 'linear-gradient(135deg, rgba(10, 10, 10, 0.9) 0%, rgba(74, 0, 114, 0.8) 100%)',
-    border: '2px solid transparent',
-    borderGradient: 'linear-gradient(135deg, #FFD700, #FF1493, #00FFFF)',
-    glow: glowEffects.gold,
+    border: isMobile() ? '1px solid rgba(255, 215, 0, 0.3)' : '2px solid transparent',
+    borderGradient: isMobile() 
+      ? 'linear-gradient(135deg, #FFD700, #FF1493)'
+      : 'linear-gradient(135deg, #FFD700, #FF1493, #00FFFF)',
+    glow: isMobile() ? '0 0 10px rgba(255, 215, 0, 0.3)' : glowEffects.gold,
   },
 
-  // Buttons
+  // Buttons - Simpler on mobile
   buttons: {
     primary: {
       background: neonGradients.royalGold,
       text: '#0A0A0A',
-      glow: glowEffects.gold,
+      glow: isMobile() ? '0 0 8px rgba(255, 215, 0, 0.5)' : glowEffects.gold,
     },
     secondary: {
       background: neonGradients.deepPurple,
       text: '#FFFFFF',
-      glow: glowEffects.purple,
+      glow: isMobile() ? '0 0 8px rgba(138, 43, 226, 0.5)' : glowEffects.purple,
     },
     neon: {
       background: neonGradients.electricPink,
       text: '#FFFFFF',
-      glow: glowEffects.pink,
+      glow: isMobile() ? '0 0 8px rgba(255, 20, 147, 0.5)' : glowEffects.pink,
     },
   },
 
-  // Text Colors
+  // Text Colors - Same for all devices
   text: {
     primary: '#FFFFFF',
     secondary: '#CCCCCC',
@@ -172,6 +221,18 @@ export const colorUtils = {
       (B > 255 ? 255 : B)
     ).toString(16).slice(1);
   },
+
+  // Mobile detection utility
+  isMobile,
+  
+  // Get optimized colors for current device
+  getOptimizedColors: () => {
+    return {
+      glow: isMobile() ? 'simple' : 'intensive',
+      gradients: isMobile() ? 'simple' : 'complex',
+      particles: isMobile() ? 'reduced' : 'full'
+    };
+  }
 };
 
 export default {

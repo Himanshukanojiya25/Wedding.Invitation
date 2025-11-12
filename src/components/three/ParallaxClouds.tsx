@@ -9,6 +9,7 @@ interface ParallaxCloudsProps {
   depth?: number;
   colors?: string[];
   area?: [number, number, number];
+  isMobile?: boolean;
 }
 
 export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
@@ -18,25 +19,33 @@ export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
   depth = 50,
   colors = ['#FFFFFF', '#F0F8FF', '#E6E6FA', '#B0E0E6'],
   area = [30, 10, 30],
+  isMobile = false,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
+  // Mobile optimizations
+  const mobileCount = isMobile ? Math.floor(count * 0.6) : count;
+  const mobileLayers = isMobile ? Math.min(layers, 2) : layers;
+  const mobileSpeed = isMobile ? speed * 0.7 : speed;
+  const mobileDepth = isMobile ? depth * 0.7 : depth;
+  const mobileArea = isMobile ? [area[0] * 0.7, area[1] * 0.7, area[2] * 0.7] : area;
+
   // Create cloud data for each layer
   const cloudData = useMemo(() => {
     const data = [];
-    for (let layer = 0; layer < layers; layer++) {
-      const layerSpeed = speed * (layer + 1) * 0.5;
-      const layerDepth = -depth * (layer / layers);
-      const layerCount = Math.floor(count / layers);
-      const layerScale = 0.5 + (layer / layers) * 1.5;
+    for (let layer = 0; layer < mobileLayers; layer++) {
+      const layerSpeed = mobileSpeed * (layer + 1) * 0.5;
+      const layerDepth = -mobileDepth * (layer / mobileLayers);
+      const layerCount = Math.floor(mobileCount / mobileLayers);
+      const layerScale = 0.5 + (layer / mobileLayers) * 1.5;
 
       for (let i = 0; i < layerCount; i++) {
         data.push({
           position: [
-            (Math.random() - 0.5) * area[0],
-            (Math.random() - 0.5) * area[1] + 3,
-            layerDepth + (Math.random() - 0.5) * area[2],
+            (Math.random() - 0.5) * mobileArea[0],
+            (Math.random() - 0.5) * mobileArea[1] + 3,
+            layerDepth + (Math.random() - 0.5) * mobileArea[2],
           ],
           scale: layerScale * (0.8 + Math.random() * 0.4),
           speed: layerSpeed * (0.8 + Math.random() * 0.4),
@@ -52,14 +61,14 @@ export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
       }
     }
     return data;
-  }, [count, layers, speed, depth, area, colors]);
+  }, [mobileCount, mobileLayers, mobileSpeed, mobileDepth, mobileArea, colors]);
 
   // Cloud geometry with organic shape
   const cloudGeometry = useMemo(() => {
     const group = new THREE.Group();
 
     // Create base cloud shape by combining multiple spheres
-    const baseGeometry = new THREE.SphereGeometry(1, 8, 6);
+    const baseGeometry = new THREE.SphereGeometry(1, isMobile ? 6 : 8, isMobile ? 4 : 6);
     
     // Create variations by scaling and positioning spheres
     const spheres = [
@@ -83,7 +92,7 @@ export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
     );
 
     return mergedGeometry;
-  }, []);
+  }, [isMobile]);
 
   // Helper function to merge geometries
   const mergeGeometries = (geometries: THREE.BufferGeometry[]) => {
@@ -151,8 +160,10 @@ export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
         cloud.scale.setScalar(data.scale * pulse);
       });
 
-      // Gentle overall group movement
-      groupRef.current.rotation.y = time * 0.02;
+      // Gentle overall group movement - Only on desktop
+      if (!isMobile) {
+        groupRef.current.rotation.y = time * 0.02;
+      }
     }
   });
 
@@ -169,13 +180,15 @@ export const ParallaxClouds: React.FC<ParallaxCloudsProps> = ({
         />
       ))}
       
-      {/* Atmospheric particles */}
-      <AtmosphericParticles 
-        count={100}
-        area={area}
-        depth={depth}
-        speed={speed}
-      />
+      {/* Atmospheric particles - Only on desktop */}
+      {!isMobile && (
+        <AtmosphericParticles 
+          count={60}
+          area={mobileArea}
+          depth={mobileDepth}
+          speed={mobileSpeed}
+        />
+      )}
     </group>
   );
 };
@@ -299,9 +312,11 @@ const AtmosphericParticles: React.FC<{
 export const SkyGradient: React.FC<{
   colors?: string[];
   height?: number;
+  isMobile?: boolean;
 }> = ({ 
   colors = ['#87CEEB', '#98FB98', '#FFD700', '#FF69B4'],
-  height = 20 
+  height = 20,
+  isMobile = false
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -332,9 +347,11 @@ export const SkyGradient: React.FC<{
     });
   }, [colors]);
 
+  const mobileHeight = isMobile ? height * 0.8 : height;
+
   return (
-    <mesh ref={meshRef} position={[0, height / 2, 0]}>
-      <boxGeometry args={[100, height, 100]} />
+    <mesh ref={meshRef} position={[0, mobileHeight / 2, 0]}>
+      <boxGeometry args={[100, mobileHeight, 100]} />
       <primitive object={material} />
     </mesh>
   );
@@ -345,22 +362,27 @@ export const MovingCloudLayer: React.FC<{
   direction?: 'left' | 'right';
   speed?: number;
   density?: number;
+  isMobile?: boolean;
 }> = ({ 
   direction = 'right',
   speed = 0.5,
-  density = 10 
+  density = 10,
+  isMobile = false
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   
+  const mobileDensity = isMobile ? Math.floor(density * 0.7) : density;
+  const mobileSpeed = isMobile ? speed * 0.7 : speed;
+  
   const clouds = useMemo(() => 
-    Array.from({ length: density }, (_, i) => ({
-      x: (i / density) * 40 - 20,
+    Array.from({ length: mobileDensity }, (_, i) => ({
+      x: (i / mobileDensity) * 40 - 20,
       y: Math.random() * 4 + 2,
       z: -10 + Math.random() * 5,
       scale: 0.5 + Math.random() * 1,
-      speed: speed * (0.8 + Math.random() * 0.4),
+      speed: mobileSpeed * (0.8 + Math.random() * 0.4),
     }))
-  , [density, speed]);
+  , [mobileDensity, mobileSpeed]);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -385,7 +407,7 @@ export const MovingCloudLayer: React.FC<{
     }
   });
 
-  const cloudGeometry = useMemo(() => new THREE.SphereGeometry(1, 7, 6), []);
+  const cloudGeometry = useMemo(() => new THREE.SphereGeometry(1, isMobile ? 6 : 7, isMobile ? 4 : 6), [isMobile]);
 
   return (
     <group ref={groupRef}>

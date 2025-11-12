@@ -15,10 +15,18 @@
     background: #0A0A0A;
     color: #FFFFFF;
     overflow-x: hidden;
+    /* Mobile optimizations */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
   }
 
   * {
     box-sizing: border-box;
+  }
+
+  /* Mobile touch improvements */
+  button, a {
+    -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3);
   }
 }
 
@@ -149,6 +157,18 @@
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     -webkit-mask-composite: xor;
+  }
+
+  /* Mobile Optimized Classes */
+  .mobile-tap-friendly {
+    min-height: 44px;
+    min-width: 44px;
+    cursor: pointer;
+  }
+
+  .performance-optimized {
+    transform: translateZ(0);
+    will-change: transform;
   }
 }
 
@@ -476,21 +496,198 @@
   transform: scale(1.05);
 }
 
-/* Responsive Text Shadows */
+/* ========== MOBILE OPTIMIZATIONS ========== */
+
+/* Mobile Responsive Design */
 @media (max-width: 768px) {
+  /* Reduce text shadows on mobile for better performance */
   .text-shadow-multi {
     text-shadow: 
       0 0 5px rgba(255, 215, 0, 0.5),
       0 0 10px rgba(255, 20, 147, 0.5),
       0 0 15px rgba(0, 255, 255, 0.5);
   }
+
+  /* Optimize animations for mobile */
+  .animate-float {
+    animation-duration: 4s;
+  }
+
+  .animate-float-slow {
+    animation-duration: 6s;
+  }
+
+  .animate-float-fast {
+    animation-duration: 3s;
+  }
+
+  .animate-pulse-slow {
+    animation-duration: 3s;
+  }
+
+  .animate-pulse-glow {
+    animation-duration: 2s;
+  }
+
+  /* Reduce blur effects on mobile for better performance */
+  .glass {
+    backdrop-filter: blur(15px);
+  }
+
+  .glass-dark {
+    backdrop-filter: blur(15px);
+  }
+
+  /* Hide scrollbar on mobile */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  /* Improve touch scrolling */
+  .optimize-scrolling {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Disable cursor effects on mobile */
+  .cursor-glow {
+    cursor: default;
+  }
+
+  .cursor-glow::after {
+    display: none;
+  }
 }
 
-/* Performance Optimizations */
+/* iPhone Notch & Safe Area Support */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Safari Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animation intensity on low-end devices */
+  @media (max-resolution: 1dppx) {
+    .glass {
+      backdrop-filter: blur(10px);
+    }
+    
+    .animate-float {
+      animation-duration: 3s;
+    }
+  }
+
+  /* Improve touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .glass {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #FFFFFF;
+  }
+  
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #FFFFFF;
+  }
+}
+
+/* Performance Optimizations for all devices */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* Mobile-first responsive design */
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+    padding: 0 3rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+    padding: 0 4rem;
+  }
+}
+
+/* Ensure smooth scrolling on mobile */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Mobile viewport height fix */
+.mobile-viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
 }

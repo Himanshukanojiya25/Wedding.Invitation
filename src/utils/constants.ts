@@ -1,3 +1,16 @@
+// Mobile detection utility
+export const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 768;
+};
+
+export const isLowPerformanceDevice = () => {
+  if (typeof window === 'undefined') return false;
+  const userAgent = navigator.userAgent || navigator.vendor;
+  return (/android|iphone|ipad|ipod/i.test(userAgent) && /mobi|mobile/i.test(userAgent)) || 
+         window.innerWidth <= 768;
+};
+
 export const WEDDING_DATA = {
   couple: {
     groom: 'Praful',
@@ -51,7 +64,7 @@ export const WEDDING_DATA = {
     },
   ],
   gallery: {
-    placeholders: 12,
+    placeholders: isMobile() ? 8 : 12, // Fewer images on mobile
   },
   social: {
     hashtag: '#PrafulPranjaliForever',
@@ -68,7 +81,9 @@ export const COLORS = {
   luxuryBlack: '#0A0A0A',
   
   // Gradient Combinations
-  gradientHero: 'linear-gradient(135deg, #4A0072 0%, #FF1493 50%, #FFD700 100%)',
+  gradientHero: isMobile() 
+    ? 'linear-gradient(135deg, #4A0072 0%, #FF1493 100%)'
+    : 'linear-gradient(135deg, #4A0072 0%, #FF1493 50%, #FFD700 100%)',
   gradientGold: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
   gradientPurple: 'linear-gradient(135deg, #4A0072 0%, #8A2BE2 100%)',
   gradientNeon: 'linear-gradient(135deg, #FF1493 0%, #00FFFF 100%)',
@@ -83,42 +98,79 @@ export const COLORS = {
   textAccent: '#FFD700',
 };
 
-// ✨ ANIMATION CONFIGURATIONS
+// ✨ ANIMATION CONFIGURATIONS - Mobile optimized
 export const ANIMATIONS = {
   // Page Transitions
-  pageEnter: { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] },
-  sectionStagger: { duration: 0.8, delay: 0.2 },
+  pageEnter: { 
+    duration: isMobile() ? 0.8 : 1.2, 
+    ease: [0.25, 0.46, 0.45, 0.94] 
+  },
+  sectionStagger: { 
+    duration: isMobile() ? 0.6 : 0.8, 
+    delay: isMobile() ? 0.1 : 0.2 
+  },
   
   // Hover Effects
-  hoverScale: { scale: 1.05, transition: { duration: 0.3 } },
-  hoverLift: { y: -10, transition: { duration: 0.4 } },
-  hoverGlow: { boxShadow: '0 0 30px rgba(255, 215, 0, 0.5)' },
+  hoverScale: { 
+    scale: isMobile() ? 1.02 : 1.05, 
+    transition: { duration: 0.3 } 
+  },
+  hoverLift: { 
+    y: isMobile() ? -5 : -10, 
+    transition: { duration: 0.4 } 
+  },
+  hoverGlow: { 
+    boxShadow: isMobile() 
+      ? '0 0 15px rgba(255, 215, 0, 0.3)' 
+      : '0 0 30px rgba(255, 215, 0, 0.5)' 
+  },
   
-  // 3D Animations
-  float: { y: [0, -20, 0], transition: { duration: 3, repeat: Infinity } },
-  rotate: { rotateY: 360, transition: { duration: 8, repeat: Infinity } },
-  pulse: { scale: [1, 1.1, 1], transition: { duration: 2, repeat: Infinity } },
+  // 3D Animations - Reduced on mobile
+  float: { 
+    y: [0, isMobile() ? -10 : -20, 0], 
+    transition: { 
+      duration: isMobile() ? 4 : 3, 
+      repeat: isLowPerformanceDevice() ? 0 : Infinity 
+    } 
+  },
+  rotate: { 
+    rotateY: 360, 
+    transition: { 
+      duration: isMobile() ? 12 : 8, 
+      repeat: isLowPerformanceDevice() ? 0 : Infinity 
+    } 
+  },
+  pulse: { 
+    scale: [1, 1.1, 1], 
+    transition: { 
+      duration: isMobile() ? 3 : 2, 
+      repeat: isLowPerformanceDevice() ? 0 : Infinity 
+    } 
+  },
 };
 
-// 🌟 PARTICLE CONFIGURATIONS
+// 🌟 PARTICLE CONFIGURATIONS - Drastically reduced on mobile
 export const PARTICLES = {
   hearts: {
-    count: 50,
-    speed: 0.5,
-    size: { min: 0.5, max: 2 },
-    colors: ['#FF1493', '#FFD700', '#00FFFF'],
+    count: isMobile() ? 15 : 50,
+    speed: isMobile() ? 0.3 : 0.5,
+    size: { min: 0.5, max: isMobile() ? 1.2 : 2 },
+    colors: isMobile() ? ['#FF1493', '#FFD700'] : ['#FF1493', '#FFD700', '#00FFFF'],
+    enabled: !isLowPerformanceDevice(),
   },
   sparkles: {
-    count: 100,
-    speed: 1,
-    size: { min: 0.1, max: 1 },
-    colors: ['#FFFFFF', '#FFD700', '#00FFFF'],
+    count: isMobile() ? 30 : 100,
+    speed: isMobile() ? 0.5 : 1,
+    size: { min: 0.1, max: isMobile() ? 0.6 : 1 },
+    colors: isMobile() ? ['#FFFFFF', '#FFD700'] : ['#FFFFFF', '#FFD700', '#00FFFF'],
+    enabled: !isLowPerformanceDevice(),
   },
   floating: {
-    count: 30,
-    speed: 0.3,
-    size: { min: 0.3, max: 1.5 },
-    colors: ['#FFD700', '#4A0072', '#FF1493'],
+    count: isMobile() ? 15 : 30,
+    speed: isMobile() ? 0.2 : 0.3,
+    size: { min: 0.3, max: isMobile() ? 1 : 1.5 },
+    colors: isMobile() ? ['#FFD700', '#4A0072'] : ['#FFD700', '#4A0072', '#FF1493'],
+    enabled: !isLowPerformanceDevice(),
   },
 };
 
@@ -128,4 +180,55 @@ export const FONTS = {
   body: 'Inter, sans-serif',
   luxury: 'Cinzel, serif',
   neon: 'Orbitron, monospace',
+};
+
+// 📱 MOBILE SPECIFIC CONFIGURATIONS
+export const MOBILE_CONFIG = {
+  // Performance settings
+  reduceAnimations: isMobile(),
+  disableHeavyEffects: isLowPerformanceDevice(),
+  lazyLoadImages: true,
+  
+  // Touch optimizations
+  touchDelay: 300,
+  scrollThreshold: 50,
+  
+  // Memory management
+  maxParticles: isMobile() ? 20 : 100,
+  maxSimultaneousAnimations: isMobile() ? 3 : 10,
+  
+  // Battery optimizations
+  reduceFPS: isMobile(),
+  throttleEvents: true,
+};
+
+// 🚀 PERFORMANCE UTILITIES
+export const PERFORMANCE = {
+  // Debounce scroll events
+  scrollDebounce: isMobile() ? 100 : 50,
+  
+  // Throttle resize events  
+  resizeThrottle: isMobile() ? 250 : 100,
+  
+  // Animation frame rate
+  targetFPS: isMobile() ? 30 : 60,
+  
+  // Memory limits
+  maxTextureSize: isMobile() ? 1024 : 2048,
+  
+  // Cache settings
+  enableCaching: true,
+  cacheDuration: isMobile() ? 30000 : 60000, // 30s vs 60s
+};
+
+export default {
+  WEDDING_DATA,
+  COLORS,
+  ANIMATIONS,
+  PARTICLES,
+  FONTS,
+  MOBILE_CONFIG,
+  PERFORMANCE,
+  isMobile,
+  isLowPerformanceDevice,
 };

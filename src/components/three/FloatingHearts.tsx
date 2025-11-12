@@ -8,17 +8,24 @@ interface FloatingHeartsProps {
   size?: number;
   colors?: string[];
   area?: [number, number, number];
+  isMobile?: boolean;
 }
 
 export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
-  count = 50,
+  count = 20,
   speed = 0.5,
   size = 0.3,
   colors = ['#FF1493', '#FF69B4', '#FFD700', '#00FFFF'],
   area = [15, 10, 15],
+  isMobile = false,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const heartsRef = useRef<THREE.InstancedMesh>(null);
+
+  // Adjust for mobile
+  const mobileCount = isMobile ? Math.floor(count * 0.4) : count;
+  const mobileSize = isMobile ? size * 0.7 : size;
+  const mobileArea = isMobile ? [area[0] * 0.7, area[1] * 0.7, area[2] * 0.7] : area;
 
   // Create heart geometry
   const heartGeometry = useMemo(() => {
@@ -36,12 +43,12 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
       bevelEnabled: true,
       bevelThickness: 0.02,
       bevelSize: 0.02,
-      bevelSegments: 8,
+      bevelSegments: isMobile ? 4 : 8,
     });
     
-    geometry.scale(size, size, size);
+    geometry.scale(mobileSize, mobileSize, mobileSize);
     return geometry;
-  }, [size]);
+  }, [mobileSize, isMobile]);
 
   // Create heart material with gradient
   const heartMaterial = useMemo(() => {
@@ -63,11 +70,11 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
   // Initialize heart instances
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const heartData = useMemo(() => {
-    return Array.from({ length: count }, (_, i) => ({
+    return Array.from({ length: mobileCount }, (_, i) => ({
       position: [
-        (Math.random() - 0.5) * area[0],
-        (Math.random() - 0.5) * area[1],
-        (Math.random() - 0.5) * area[2],
+        (Math.random() - 0.5) * mobileArea[0],
+        (Math.random() - 0.5) * mobileArea[1],
+        (Math.random() - 0.5) * mobileArea[2],
       ],
       rotation: [
         Math.random() * Math.PI,
@@ -84,7 +91,7 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
         (Math.random() - 0.5) * 0.02,
       ],
     }));
-  }, [count, area, speed, colors.length]);
+  }, [mobileCount, mobileArea, speed, colors.length]);
 
   // Update heart positions and animations
   useFrame((state) => {
@@ -131,7 +138,7 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
     }
 
     // Gentle group rotation
-    if (groupRef.current) {
+    if (groupRef.current && !isMobile) {
       groupRef.current.rotation.y = time * 0.05;
       groupRef.current.rotation.x = Math.sin(time * 0.1) * 0.1;
     }
@@ -142,7 +149,7 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
       {/* Main floating hearts */}
       <instancedMesh
         ref={heartsRef}
-        args={[heartGeometry, heartMaterial[0], count]}
+        args={[heartGeometry, heartMaterial[0], mobileCount]}
         frustumCulled={false}
       >
         {/* Fallback material for instanced mesh */}
@@ -158,18 +165,20 @@ export const FloatingHearts: React.FC<FloatingHeartsProps> = ({
         />
       </instancedMesh>
 
-      {/* Additional sparkle effects */}
-      <SparkleParticles 
-        count={count * 2}
-        area={area}
-        colors={colors}
-        parentTime={useFrame((state) => state.clock.getElapsedTime())}
-      />
+      {/* Additional sparkle effects - Only on desktop */}
+      {!isMobile && (
+        <SparkleParticles 
+          count={mobileCount}
+          area={mobileArea}
+          colors={colors}
+          parentTime={useFrame((state) => state.clock.getElapsedTime())}
+        />
+      )}
     </group>
   );
 };
 
-// Sparkle particle system for extra magic
+// Sparkle particle system for extra magic - Only used on desktop
 const SparkleParticles: React.FC<{
   count: number;
   area: [number, number, number];
@@ -256,13 +265,16 @@ export const InteractiveHeart: React.FC<{
   color?: string;
   size?: number;
   pulseSpeed?: number;
+  isMobile?: boolean;
 }> = ({ 
   position = [0, 0, 0], 
   color = '#FF1493', 
   size = 1,
-  pulseSpeed = 1 
+  pulseSpeed = 1,
+  isMobile = false
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const mobileSize = isMobile ? size * 0.7 : size;
   
   useFrame((state) => {
     if (meshRef.current) {
@@ -270,14 +282,16 @@ export const InteractiveHeart: React.FC<{
       
       // Heartbeat animation
       const pulse = 1 + 0.1 * Math.sin(time * pulseSpeed * 4);
-      meshRef.current.scale.setScalar(size * pulse);
+      meshRef.current.scale.setScalar(mobileSize * pulse);
       
       // Gentle floating
       meshRef.current.position.y = position[1] + Math.sin(time * pulseSpeed) * 0.2;
       
-      // Slow rotation
-      meshRef.current.rotation.y = time * 0.5;
-      meshRef.current.rotation.x = Math.sin(time * 0.3) * 0.1;
+      // Slow rotation - Only on desktop
+      if (!isMobile) {
+        meshRef.current.rotation.y = time * 0.5;
+        meshRef.current.rotation.x = Math.sin(time * 0.3) * 0.1;
+      }
     }
   });
 
@@ -296,12 +310,12 @@ export const InteractiveHeart: React.FC<{
       bevelEnabled: true,
       bevelThickness: 0.05,
       bevelSize: 0.05,
-      bevelSegments: 12,
+      bevelSegments: isMobile ? 8 : 12,
     });
     
-    geometry.scale(size, size, size);
+    geometry.scale(mobileSize, mobileSize, mobileSize);
     return geometry;
-  }, [size]);
+  }, [mobileSize, isMobile]);
 
   return (
     <mesh ref={meshRef} position={position} geometry={heartGeometry}>

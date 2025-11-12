@@ -78,6 +78,7 @@ interface NeonGlowProps {
   position?: [number, number, number];
   fontSize?: number;
   geometry?: 'text' | 'ring' | 'cube' | 'sphere';
+  isMobile?: boolean;
 }
 
 declare global {
@@ -96,31 +97,35 @@ export const NeonGlow: React.FC<NeonGlowProps> = ({
   position = [0, 0, 0],
   fontSize = 0.5,
   geometry = 'text',
+  isMobile = false,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const materialRef = useRef<NeonMaterial>(null);
+
+  // Mobile optimizations
+  const mobileIntensity = isMobile ? intensity * 0.7 : intensity;
+  const mobilePulseSpeed = isMobile ? pulseSpeed * 0.8 : pulseSpeed;
 
   // Create geometry based on type
   const sceneGeometry = useMemo(() => {
     switch (geometry) {
       case 'text':
         // For text, we'll use a simple plane as placeholder
-        // In real implementation, you'd use TextGeometry from drei
-        return new THREE.PlaneGeometry(5, 1);
+        return new THREE.PlaneGeometry(isMobile ? 3 : 5, isMobile ? 0.6 : 1);
       
       case 'ring':
-        return new THREE.TorusGeometry(1, 0.1, 16, 100);
+        return new THREE.TorusGeometry(1, 0.1, isMobile ? 12 : 16, isMobile ? 60 : 100);
       
       case 'cube':
         return new THREE.BoxGeometry(1, 1, 1);
       
       case 'sphere':
-        return new THREE.SphereGeometry(1, 32, 32);
+        return new THREE.SphereGeometry(1, isMobile ? 16 : 32, isMobile ? 12 : 32);
       
       default:
-        return new THREE.PlaneGeometry(5, 1);
+        return new THREE.PlaneGeometry(isMobile ? 3 : 5, isMobile ? 0.6 : 1);
     }
-  }, [geometry]);
+  }, [geometry, isMobile]);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -128,14 +133,16 @@ export const NeonGlow: React.FC<NeonGlowProps> = ({
     if (materialRef.current) {
       materialRef.current.uniforms.time.value = time;
       materialRef.current.uniforms.glowColor.value.set(color);
-      materialRef.current.uniforms.glowIntensity.value = intensity;
-      materialRef.current.uniforms.pulseSpeed.value = pulseSpeed;
+      materialRef.current.uniforms.glowIntensity.value = mobileIntensity;
+      materialRef.current.uniforms.pulseSpeed.value = mobilePulseSpeed;
     }
 
     // Gentle floating animation
     if (groupRef.current) {
       groupRef.current.rotation.y = time * 0.2;
-      groupRef.current.position.y = position[1] + Math.sin(time * 0.5) * 0.1;
+      if (!isMobile) {
+        groupRef.current.position.y = position[1] + Math.sin(time * 0.5) * 0.1;
+      }
     }
   });
 
@@ -150,13 +157,15 @@ export const NeonGlow: React.FC<NeonGlowProps> = ({
         />
       </mesh>
       
-      {/* Additional glow effects */}
-      <GlowOrbs 
-        count={8}
-        radius={2}
-        color={color}
-        pulseSpeed={pulseSpeed * 0.5}
-      />
+      {/* Additional glow effects - Only on desktop */}
+      {!isMobile && (
+        <GlowOrbs 
+          count={6}
+          radius={1.5}
+          color={color}
+          pulseSpeed={mobilePulseSpeed * 0.5}
+        />
+      )}
     </group>
   );
 };
@@ -220,15 +229,21 @@ export const NeonText: React.FC<{
   fontSize?: number;
   position?: [number, number, number];
   intensity?: number;
+  isMobile?: boolean;
 }> = ({ 
   children, 
   color = '#FF1493', 
   fontSize = 0.5,
   position = [0, 0, 0],
-  intensity = 1.0 
+  intensity = 1.0,
+  isMobile = false
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const textMaterialRef = useRef<NeonMaterial>(null);
+
+  // Mobile optimizations
+  const mobileFontSize = isMobile ? fontSize * 0.8 : fontSize;
+  const mobileIntensity = isMobile ? intensity * 0.8 : intensity;
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -236,11 +251,11 @@ export const NeonText: React.FC<{
     if (textMaterialRef.current) {
       textMaterialRef.current.uniforms.time.value = time;
       textMaterialRef.current.uniforms.glowColor.value.set(color);
-      textMaterialRef.current.uniforms.glowIntensity.value = intensity;
+      textMaterialRef.current.uniforms.glowIntensity.value = mobileIntensity;
     }
 
-    // Text floating animation
-    if (groupRef.current) {
+    // Text floating animation - Only on desktop
+    if (groupRef.current && !isMobile) {
       groupRef.current.position.y = position[1] + Math.sin(time * 0.3) * 0.05;
     }
   });
@@ -249,7 +264,7 @@ export const NeonText: React.FC<{
     <group ref={groupRef} position={position}>
       {/* Front text */}
       <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[children.length * fontSize * 0.6, fontSize]} />
+        <planeGeometry args={[children.length * mobileFontSize * 0.6, mobileFontSize]} />
         <neonMaterial
           ref={textMaterialRef}
           key={NeonMaterial.key}
@@ -257,12 +272,14 @@ export const NeonText: React.FC<{
         />
       </mesh>
       
-      {/* Glow halo */}
-      <GlowHalo 
-        size={children.length * fontSize * 0.7}
-        color={color}
-        intensity={intensity}
-      />
+      {/* Glow halo - Only on desktop */}
+      {!isMobile && (
+        <GlowHalo 
+          size={children.length * mobileFontSize * 0.7}
+          color={color}
+          intensity={mobileIntensity}
+        />
+      )}
     </group>
   );
 };
@@ -305,19 +322,24 @@ export const NeonBorder: React.FC<{
   color?: string;
   thickness?: number;
   position?: [number, number, number];
+  isMobile?: boolean;
 }> = ({ 
   width, 
   height, 
   color = '#00FFFF',
   thickness = 0.1,
-  position = [0, 0, 0] 
+  position = [0, 0, 0],
+  isMobile = false
 }) => {
   const borderRef = useRef<THREE.Group>(null);
+  
+  // Mobile optimizations
+  const mobileThickness = isMobile ? thickness * 0.8 : thickness;
   
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
     
-    if (borderRef.current) {
+    if (borderRef.current && !isMobile) {
       borderRef.current.children.forEach((line, i) => {
         const pulse = 0.7 + 0.3 * Math.sin(time * 2 + i * 0.5);
         (line as THREE.Mesh).material.opacity = 0.8 * pulse;
@@ -327,14 +349,14 @@ export const NeonBorder: React.FC<{
 
   const borderPoints = useMemo(() => [
     // Top border
-    { position: [-width/2, height/2, 0], size: [width, thickness] },
+    { position: [-width/2, height/2, 0], size: [width, mobileThickness] },
     // Bottom border
-    { position: [-width/2, -height/2, 0], size: [width, thickness] },
+    { position: [-width/2, -height/2, 0], size: [width, mobileThickness] },
     // Left border
-    { position: [-width/2, 0, 0], size: [thickness, height] },
+    { position: [-width/2, 0, 0], size: [mobileThickness, height] },
     // Right border
-    { position: [width/2, 0, 0], size: [thickness, height] },
-  ], [width, height, thickness]);
+    { position: [width/2, 0, 0], size: [mobileThickness, height] },
+  ], [width, height, mobileThickness]);
 
   return (
     <group ref={borderRef} position={position}>
@@ -349,12 +371,14 @@ export const NeonBorder: React.FC<{
         </mesh>
       ))}
       
-      {/* Corner accents */}
-      <CornerAccents 
-        width={width}
-        height={height}
-        color={color}
-      />
+      {/* Corner accents - Only on desktop */}
+      {!isMobile && (
+        <CornerAccents 
+          width={width}
+          height={height}
+          color={color}
+        />
+      )}
     </group>
   );
 };

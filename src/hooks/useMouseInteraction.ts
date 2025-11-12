@@ -36,8 +36,15 @@ export const useMouseInteraction = (): UseMouseInteractionReturn => {
     distance: 0,
   });
 
+  // Mobile detection - disable heavy effects on mobile
+  const isTouchDevice = typeof window !== 'undefined' && 
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   // Track mouse position and movement
   useEffect(() => {
+    // Skip mouse tracking on touch devices for better performance
+    if (isTouchDevice) return;
+
     let animationFrameId: number;
 
     const updateMousePosition = (event: MouseEvent) => {
@@ -121,11 +128,12 @@ export const useMouseInteraction = (): UseMouseInteractionReturn => {
         element.removeEventListener('mouseup', handleMouseUp);
       }
     };
-  }, []);
+  }, [isTouchDevice]);
 
   // Create mouse trail effect
   const addTrail = (event: MouseEvent) => {
-    if (!trailRef.current) return;
+    // Disable trails on mobile for better performance
+    if (isTouchDevice || !trailRef.current) return;
 
     const trail = document.createElement('div');
     const colors = ['#FF1493', '#FFD700', '#00FFFF', '#8A2BE2'];
@@ -171,6 +179,9 @@ export const useMouseInteraction = (): UseMouseInteractionReturn => {
 
   // Add trail effect on mouse move
   useEffect(() => {
+    // Skip trail effects on mobile
+    if (isTouchDevice) return;
+
     const handleTrailMove = (event: MouseEvent) => {
       if (state.velocity > 2) { // Only add trails when moving fast enough
         addTrail(event);
@@ -179,7 +190,7 @@ export const useMouseInteraction = (): UseMouseInteractionReturn => {
 
     document.addEventListener('mousemove', handleTrailMove);
     return () => document.removeEventListener('mousemove', handleTrailMove);
-  }, [state.velocity]);
+  }, [state.velocity, isTouchDevice]);
 
   return {
     ...state,
@@ -196,8 +207,15 @@ export const useMouseEffects = () => {
   const [effects, setEffects] = useState<Array<{ id: number; x: number; y: number; type: string }>>([]);
   const effectId = useRef(0);
 
+  // Mobile detection
+  const isTouchDevice = typeof window !== 'undefined' && 
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   // Add sparkle effect at mouse position
   const addSparkle = (x: number, y: number) => {
+    // Skip effects on mobile
+    if (isTouchDevice) return;
+
     const id = effectId.current++;
     setEffects(prev => [...prev, { id, x, y, type: 'sparkle' }]);
     
@@ -208,6 +226,9 @@ export const useMouseEffects = () => {
 
   // Add ripple effect at mouse position
   const addRipple = (x: number, y: number) => {
+    // Skip effects on mobile
+    if (isTouchDevice) return;
+
     const id = effectId.current++;
     setEffects(prev => [...prev, { id, x, y, type: 'ripple' }]);
     
@@ -218,6 +239,9 @@ export const useMouseEffects = () => {
 
   // Add heart effect at mouse position
   const addHeart = (x: number, y: number) => {
+    // Skip effects on mobile
+    if (isTouchDevice) return;
+
     const id = effectId.current++;
     setEffects(prev => [...prev, { id, x, y, type: 'heart' }]);
     
@@ -228,6 +252,9 @@ export const useMouseEffects = () => {
 
   // Auto-add effects based on mouse behavior
   useEffect(() => {
+    // Skip auto-effects on mobile
+    if (isTouchDevice) return;
+
     if (mouse.isClicking) {
       addRipple(mouse.position.x, mouse.position.y);
     }
@@ -239,7 +266,7 @@ export const useMouseEffects = () => {
     if (mouse.distance > 1000 && Math.random() > 0.9) {
       addHeart(mouse.position.x, mouse.position.y);
     }
-  }, [mouse.isClicking, mouse.velocity, mouse.distance, mouse.position]);
+  }, [mouse.isClicking, mouse.velocity, mouse.distance, mouse.position, isTouchDevice]);
 
   return {
     ...mouse,
@@ -256,7 +283,14 @@ export const useCustomCursor = (cursorType: 'default' | 'pointer' | 'heart' | 's
   const [cursor, setCursor] = useState(cursorType);
   const cursorRef = useRef<HTMLDivElement>(null);
 
+  // Mobile detection - disable custom cursor on mobile
+  const isTouchDevice = typeof window !== 'undefined' && 
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   useEffect(() => {
+    // Skip custom cursor on mobile
+    if (isTouchDevice) return;
+
     const updateCursorPosition = (event: MouseEvent) => {
       if (cursorRef.current) {
         cursorRef.current.style.left = `${event.clientX}px`;
@@ -266,7 +300,7 @@ export const useCustomCursor = (cursorType: 'default' | 'pointer' | 'heart' | 's
 
     document.addEventListener('mousemove', updateCursorPosition);
     return () => document.removeEventListener('mousemove', updateCursorPosition);
-  }, []);
+  }, [isTouchDevice]);
 
   const setCursorType = (type: typeof cursorType) => {
     setCursor(type);
@@ -287,6 +321,7 @@ export const useCustomCursor = (cursorType: 'default' | 'pointer' | 'heart' | 's
     setCursorType,
     cursorRef,
     getCursorStyle,
+    isEnabled: !isTouchDevice, // Add flag to check if cursor is enabled
   };
 };
 

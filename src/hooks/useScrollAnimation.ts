@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export const useScrollAnimation = (threshold = 0.1) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -10,7 +10,14 @@ export const useScrollAnimation = (threshold = 0.1) => {
           setIsVisible(true);
         }
       },
-      { threshold }
+      { 
+        threshold,
+        // Mobile optimization: Use passive scrolling
+        ...(typeof window !== 'undefined' && 'ontouchstart' in window 
+          ? { root: null, rootMargin: '0px 0px -10% 0px' }
+          : {}
+        )
+      }
     );
 
     const element = document.getElementById('scroll-target');
@@ -36,7 +43,12 @@ export const useScrollPosition = () => {
       setScrollY(window.scrollY);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Mobile optimization: Use passive scroll listener
+    const options = typeof window !== 'undefined' && 'ontouchstart' in window 
+      ? { passive: true } 
+      : {};
+
+    window.addEventListener('scroll', handleScroll, options);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 

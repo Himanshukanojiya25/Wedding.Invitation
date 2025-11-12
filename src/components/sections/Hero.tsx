@@ -5,20 +5,26 @@ import { FloatingRings } from '../three/FloatingRings';
 import { WEDDING_DATA } from '../../utils/constants';
 import { smoothScroll } from '../../utils/helpers';
 
-export const Hero = () => {
+interface HeroProps {
+  isMobile?: boolean;
+}
+
+export const Hero = ({ isMobile = false }: HeroProps) => {
   return (
     <section
       id="hero"
       className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#0A0A0A] via-[#1A1A1A] to-[#2A2A2A]"
     >
-      {/* Subtle 3D Background */}
-      <div className="absolute inset-0 opacity-30">
-        <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
-          <FloatingRings />
-          <ambientLight intensity={0.4} />
-          <pointLight position={[10, 10, 10]} intensity={0.6} color="#D4AF37" />
-        </Canvas>
-      </div>
+      {/* Subtle 3D Background - Conditionally render for mobile */}
+      {!isMobile && (
+        <div className="absolute inset-0 opacity-30">
+          <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
+            <FloatingRings />
+            <ambientLight intensity={0.4} />
+            <pointLight position={[10, 10, 10]} intensity={0.6} color="#D4AF37" />
+          </Canvas>
+        </div>
+      )}
 
       {/* Elegant Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
@@ -47,7 +53,7 @@ export const Hero = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, delay: 0.7 }}
-            className="text-6xl md:text-8xl lg:text-9xl text-[#D4AF37]"
+            className={`text-4xl md:text-6xl lg:text-8xl text-[#D4AF37] ${isMobile ? 'text-5xl' : ''}`}
             style={{ 
               fontFamily: 'Great Vibes, cursive',
               textShadow: '0 4px 20px rgba(212, 175, 55, 0.3)'
@@ -63,7 +69,7 @@ export const Hero = () => {
             transition={{ duration: 1, delay: 0.9 }}
           >
             <p
-              className="text-2xl md:text-3xl text-white font-light"
+              className="text-xl md:text-2xl lg:text-3xl text-white font-light"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
               {WEDDING_DATA.events.wedding.displayDate}
@@ -93,28 +99,30 @@ export const Hero = () => {
         </motion.div>
       </div>
 
-      {/* Subtle Floating Particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-[#D4AF37] rounded-full opacity-30"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+      {/* Subtle Floating Particles - Only on desktop */}
+      {!isMobile && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-[#D4AF37] rounded-full opacity-30"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [0, -20, 0],
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

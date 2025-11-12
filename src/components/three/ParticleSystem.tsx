@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -12,6 +12,7 @@ interface ParticleSystemProps {
   behavior?: 'float' | 'orbit' | 'explode' | 'fountain';
   opacity?: number;
   blinking?: boolean;
+  isMobile?: boolean;
 }
 
 export const ParticleSystem: React.FC<ParticleSystemProps> = ({
@@ -24,28 +25,35 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
   behavior = 'float',
   opacity = 0.8,
   blinking = false,
+  isMobile = false,
 }) => {
   const pointsRef = useRef<THREE.Points>(null);
   const groupRef = useRef<THREE.Group>(null);
 
+  // Mobile optimizations
+  const mobileCount = isMobile ? Math.floor(count * 0.4) : count;
+  const mobileSize = isMobile ? size * 0.7 : size;
+  const mobileSpeed = isMobile ? speed * 0.7 : speed;
+  const mobileArea = isMobile ? [area[0] * 0.7, area[1] * 0.7, area[2] * 0.7] : area;
+
   // Generate particle data
   const particles = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const colorsArray = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const velocities = new Float32Array(count * 3);
-    const originalPositions = new Float32Array(count * 3);
-    const offsets = new Float32Array(count);
-    const speeds = new Float32Array(count);
-    const phases = new Float32Array(count);
+    const positions = new Float32Array(mobileCount * 3);
+    const colorsArray = new Float32Array(mobileCount * 3);
+    const sizes = new Float32Array(mobileCount);
+    const velocities = new Float32Array(mobileCount * 3);
+    const originalPositions = new Float32Array(mobileCount * 3);
+    const offsets = new Float32Array(mobileCount);
+    const speeds = new Float32Array(mobileCount);
+    const phases = new Float32Array(mobileCount);
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < mobileCount; i++) {
       const i3 = i * 3;
       
       // Random positions within area
-      positions[i3] = (Math.random() - 0.5) * area[0];
-      positions[i3 + 1] = (Math.random() - 0.5) * area[1];
-      positions[i3 + 2] = (Math.random() - 0.5) * area[2];
+      positions[i3] = (Math.random() - 0.5) * mobileArea[0];
+      positions[i3 + 1] = (Math.random() - 0.5) * mobileArea[1];
+      positions[i3 + 2] = (Math.random() - 0.5) * mobileArea[2];
       
       // Store original positions for certain behaviors
       originalPositions[i3] = positions[i3];
@@ -59,7 +67,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
       colorsArray[i3 + 2] = color.b;
       
       // Random sizes
-      sizes[i] = size * (0.5 + Math.random() * 0.5);
+      sizes[i] = mobileSize * (0.5 + Math.random() * 0.5);
       
       // Random velocities based on behavior
       switch (behavior) {
@@ -84,7 +92,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
       }
       
       offsets[i] = Math.random() * Math.PI * 2;
-      speeds[i] = speed * (0.5 + Math.random() * 0.5);
+      speeds[i] = mobileSpeed * (0.5 + Math.random() * 0.5);
       phases[i] = Math.random() * Math.PI * 2;
     }
 
@@ -98,7 +106,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
       speeds,
       phases
     };
-  }, [count, colors, size, area, behavior, speed]);
+  }, [mobileCount, colors, mobileSize, mobileArea, behavior, mobileSpeed]);
 
   // Create geometry based on shape
   const particleGeometry = useMemo(() => {
@@ -129,7 +137,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
         geometry = new THREE.ShapeGeometry(starShape);
         break;
       default: // sphere
-        geometry = new THREE.SphereGeometry(0.5, 8, 6);
+        geometry = new THREE.SphereGeometry(0.5, isMobile ? 6 : 8, isMobile ? 4 : 6);
     }
 
     // Add particle attributes
@@ -143,7 +151,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
     geometry.setAttribute('phase', new THREE.BufferAttribute(particles.phases, 1));
 
     return geometry;
-  }, [particles, shape]);
+  }, [particles, shape, isMobile]);
 
   // Animation frame
   useFrame((state) => {
@@ -157,7 +165,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
       const speeds = particleGeometry.attributes.speed.array as Float32Array;
       const phases = particleGeometry.attributes.phase.array as Float32Array;
 
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < mobileCount; i++) {
         const i3 = i * 3;
         
         switch (behavior) {
@@ -209,7 +217,7 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
             velocities[i3 + 1] -= 0.001;
             
             // Reset particles that fall too low
-            if (positions[i3 + 1] < -area[1] / 2) {
+            if (positions[i3 + 1] < -mobileArea[1] / 2) {
               positions[i3] = originalPositions[i3];
               positions[i3 + 1] = originalPositions[i3 + 1];
               positions[i3 + 2] = originalPositions[i3 + 2];
@@ -230,8 +238,8 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
       particleGeometry.attributes.position.needsUpdate = true;
     }
 
-    // Gentle group rotation for some behaviors
-    if (groupRef.current && behavior !== 'fountain') {
+    // Gentle group rotation for some behaviors - Only on desktop
+    if (groupRef.current && behavior !== 'fountain' && !isMobile) {
       groupRef.current.rotation.y = time * 0.05;
     }
   });
@@ -252,54 +260,60 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
   );
 };
 
-// Specialized Particle Systems
+// Specialized Particle Systems with mobile optimization
 export const SparkleParticles: React.FC<{
   count?: number;
   intensity?: number;
-}> = ({ count = 50, intensity = 1 }) => {
+  isMobile?: boolean;
+}> = ({ count = 50, intensity = 1, isMobile = false }) => {
   return (
     <ParticleSystem
-      count={count}
+      count={isMobile ? Math.floor(count * 0.5) : count}
       colors={['#FFFFFF', '#FFD700', '#00FFFF']}
       size={0.05}
-      speed={2}
+      speed={isMobile ? 1.5 : 2}
       shape="star"
       behavior="float"
       blinking={true}
       opacity={0.9 * intensity}
+      isMobile={isMobile}
     />
   );
 };
 
 export const LoveParticles: React.FC<{
   count?: number;
-}> = ({ count = 30 }) => {
+  isMobile?: boolean;
+}> = ({ count = 30, isMobile = false }) => {
   return (
     <ParticleSystem
-      count={count}
+      count={isMobile ? Math.floor(count * 0.6) : count}
       colors={['#FF1493', '#FF69B4', '#DC143C']}
       size={0.15}
-      speed={1}
+      speed={isMobile ? 0.8 : 1}
       shape="sphere"
       behavior="orbit"
       opacity={0.8}
+      isMobile={isMobile}
     />
   );
 };
 
 export const MagicParticles: React.FC<{
   count?: number;
-}> = ({ count = 80 }) => {
+  isMobile?: boolean;
+}> = ({ count = 80, isMobile = false }) => {
   return (
     <ParticleSystem
-      count={count}
+      count={isMobile ? Math.floor(count * 0.5) : count}
       colors={['#8A2BE2', '#4B0082', '#9400D3', '#00FFFF']}
       size={0.08}
-      speed={1.5}
+      speed={isMobile ? 1 : 1.5}
       shape="cube"
       behavior="float"
       blinking={true}
       opacity={0.7}
+      isMobile={isMobile}
     />
   );
 };
@@ -310,11 +324,13 @@ export const ParticleEmitter: React.FC<{
   burstCount?: number;
   color?: string;
   onEmit?: () => void;
+  isMobile?: boolean;
 }> = ({ 
   position = [0, 0, 0],
   burstCount = 10,
   color = '#FF1493',
-  onEmit 
+  onEmit,
+  isMobile = false
 }) => {
   const particlesRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -326,8 +342,10 @@ export const ParticleEmitter: React.FC<{
     maxLife: number;
   }>>([]);
 
+  const mobileBurstCount = isMobile ? Math.floor(burstCount * 0.6) : burstCount;
+
   const emitParticles = useCallback(() => {
-    const newParticles = Array.from({ length: burstCount }, () => ({
+    const newParticles = Array.from({ length: mobileBurstCount }, () => ({
       position: [position[0], position[1], position[2]] as [number, number, number],
       velocity: [
         (Math.random() - 0.5) * 0.1,
@@ -340,7 +358,7 @@ export const ParticleEmitter: React.FC<{
     
     setParticles(prev => [...prev, ...newParticles]);
     onEmit?.();
-  }, [position, burstCount, onEmit]);
+  }, [position, mobileBurstCount, onEmit]);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -374,13 +392,13 @@ export const ParticleEmitter: React.FC<{
     }
   });
 
-  const sphereGeometry = useMemo(() => new THREE.SphereGeometry(0.1, 8, 6), []);
+  const sphereGeometry = useMemo(() => new THREE.SphereGeometry(0.1, isMobile ? 6 : 8, isMobile ? 4 : 6), [isMobile]);
 
   return (
     <group>
       <instancedMesh
         ref={particlesRef}
-        args={[sphereGeometry, undefined, burstCount]}
+        args={[sphereGeometry, undefined, mobileBurstCount]}
         frustumCulled={false}
       >
         <meshBasicMaterial
